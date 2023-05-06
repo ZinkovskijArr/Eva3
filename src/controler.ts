@@ -4,7 +4,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { GoogleSpreadsheet } = require('google-spreadsheet');
+import { error } from 'console';
 import { regParse } from './model/model';
+import { writeToFile } from './addToFile';
 
 require('dotenv').config();
 
@@ -24,10 +26,10 @@ let data = {
     for_date: ''
 };
 
-const doc = new GoogleSpreadsheet('1YUs8Ye_8jTbEYeO_HoDvKuOPmqFCTacawNTb9SAVFx0');
+const doc = new GoogleSpreadsheet('1YUs8Ye_8jTbEYeO_HoDvKuOPmqFCTacawNTb9SAVFx0');//в аргументах ИД документа
 
 const start = async (msg: any): Promise<void> => {
-    let str:string = msg.text!;
+    let str: string = msg.text!;
     str = str.toLowerCase();
 
     try {
@@ -42,7 +44,7 @@ const start = async (msg: any): Promise<void> => {
 
 
     data.ldap = msg.from.username;
-
+    console.log(data.ldap);
     data.type = regParse.getRegEx(str, regExType);
     // ищет регулярное выражение в сообжении
     if (regParse.matchRegEx(str, regExSince)) {
@@ -56,29 +58,38 @@ const start = async (msg: any): Promise<void> => {
         let day = dataTime.getMonth()
         let currentData = `${dataTime.getDate()}.${day < 10 ? '0' + day : day}.${dataTime.getFullYear()}`;
         data.date = currentData;
-        //проверяет отработка или допка
+        //проверяет отработка или допка(доп смены отсутствует поле "за какую дату")
         if (data.type !== 'доп') {
             let res;
             data.type = 'отработка';
             res = regParse.getRegEx(str, regExDay);
+            console.log(res);
             data.for_date = res.length == 1 ? '0' + res : res;
         }
         //добавление собраные данные в гугл таблицу
         await sheet.addRow(data);
-        //const rows = await sheet.getRows();
+        console.log(data);
         data.for_date = '';
     }
-    else console.log('Not found rexex');
-    const rows = await sheet.getRows(); // can pass in { limit, offset }
+    else console.log('Not found regex');
 
-// read/write row values
-    console.log(rows.length);
+    try {
+        //const rows = await sheet.getRows(); // can pass in { limit, offset }
+
+        // read/write row values
+        // writeToFile(rows.map((value: { _rawData: any; })=>{
+        //     return value._rawData;
+        // }));
+        //console.log(rows[rows.length - 1]);
+    }
+    catch (e) {
+        console.error(`output ${error}`)
+    }
     //console.log(sheet.getSheet());
     //console.log(cel);
     //console.log(await sheet.values.get('1YUs8Ye_8jTbEYeO_HoDvKuOPmqFCTacawNTb9SAVFx0','A1:C3'));
+    
 }
-
-
 
 
 export const newMessage = (msg: any): void => {
